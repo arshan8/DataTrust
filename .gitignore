@@ -1,0 +1,18 @@
+venv/
+.env
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+build/
+dist/
+secrets/
+backend/secrets/*
+
+# Custom Ignored Directories & Files
+.venv/
+images/
+DataTrust_Demo_Content/
+frontend/
+setup_guide.md
+qna.txt
