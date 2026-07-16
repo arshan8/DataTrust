@@ -5,19 +5,19 @@ from typing import List, Dict
 def normalize_text(text: str) -> str:
     if not text:
         return ""
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = "\n".join(line.strip() for line in text.split("\n"))
-    text = "\n".join(line for line in text.split("\n") if line.strip())
+    text = text.replace("\r\n", "\n").replace("\r", "\n") #1 #newline format for windows is \r\n, for mac is \r, make it to linux \n
+    text = "\n".join(line.strip() for line in text.split("\n"))  #remove extra spaces
+    text = "\n".join(line for line in text.split("\n") if line.strip()) #remove empty lines
     return text.strip()
 
 
 def hash_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()  #2 use it to detect change //sync connector
 
 
 def estimate_token_count(text: str) -> int:
-    # lightweight approximation for now
-    return max(1, len(text.split()))
+    # lightweight approximation for now  ## Splits the string by any whitespace (spaces, tabs, newlines) to get a list of individual words.
+    return max(1, len(text.split())) #3 context management
 
 
 def chunk_text(
