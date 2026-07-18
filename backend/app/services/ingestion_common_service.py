@@ -11,15 +11,16 @@ from app.services.document_service import (
 )
 
 
+#7
 def get_required_ids(source_code: str, department_code: str, level_code: str, scope_external_id: str):
-    source_system = supabase.table("source_systems").select("id").eq("code", source_code).single().execute().data
+    source_system = supabase.table("source_systems").select("id").eq("code", source_code).single().execute().data  #single vs limit(1), single trhows error if empty
     department = supabase.table("departments").select("id").eq("code", department_code).single().execute().data
     auth_level = supabase.table("auth_levels").select("id").eq("code", level_code).single().execute().data
     scope_rows = (
         supabase.table("resource_scopes")
         .select("id")
         .eq("external_resource_id", scope_external_id)
-        .limit(1)
+        .limit(1)   #if not found then its empty
         .execute()
         .data
     )
