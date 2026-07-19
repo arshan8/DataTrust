@@ -76,22 +76,22 @@ graph TD
     RouteCheck -->|general_concept| GenAnswer["generate_general_answer() / stream_general_answer()<br><i>(generation_service.py)</i>"]
     
     %% RAG Route Path
-    RouteCheck -->|internal_retrieval| RAGPipeline
+    RouteCheck -->|internal_retrieval| RetrieveChunks["retrieve_authorized_chunks(query, user_context)<br><i>(vector_retrieval_service.py)</i>"]
     
-    subgraph RAG Pipeline
-        RAGPipeline --> SelectSources["1. select_sources(query, user_context)<br><i>(orchestrator_service.py)</i>"]
-        SelectSources -->|Filter source types based on hints| AllowedScopes["2. get_allowed_resource_scopes(user_context)<br><i>(resource_scope_service.py)</i>"]
-        AllowedScopes -->|Identify scopes matching department & rank| RetrieveChunks["3. retrieve_authorized_chunks()<br><i>(vector_retrieval_service.py)</i>"]
-        
-        %% Database retrieval
-        RetrieveChunks -->|Get query vector embedding| Embedding["generate_embedding()<br><i>(embedding_service.py)</i>"]
-        Embedding -->|Parameterized SELECT query with pgvector <=> operator| PostgresVector[(PostgreSQL / pgvector)]
-        PostgresVector -->|Return authorized text chunks| GenerateAnswer["4. generate_answer() / stream_answer()<br><i>(generation_service.py)</i>"]
+    subgraph RAG Pipeline Execution Flow
+        RetrieveChunks --> GetScopes["1. get_allowed_resource_scopes(user_context)<br><i>(resource_scope_service.py)</i>"]
+        GetScopes --> ChooseSources["2. choose_sources(query, allowed_scopes, user_context)<br><i>(orchestrator_service.py)</i>"]
+        ChooseSources --> GetEmbedding["3. generate_embedding(query)<br><i>(embedding_service.py)</i>"]
+        GetEmbedding --> PostgresQuery["4. Execute raw SQL query with pgvector <=> operator"]
+        PostgresQuery --> PostgresVector[(PostgreSQL / pgvector)]
+        PostgresVector --> ReturnChunks["5. Return authorized chunks to chat.py Router"]
     end
     
+    ReturnChunks --> GenerateAnswer["generate_answer() / stream_answer()<br><i>(generation_service.py)</i>"]
+    
     %% Generation Call
-    GenAnswer --> LLMCall
-    GenerateAnswer --> LLMCall["active_provider.generate() / stream()<br><i>(llm_client.py)</i>"]
+    GenAnswer --> LLMCall["active_provider.generate() / stream()<br><i>(llm_client.py)</i>"]
+    GenerateAnswer --> LLMCall
     LLMCall -->|Call LLM Server| LLMProvider["Ollama (local) / OpenRouter (cloud)"]
     
     %% Output Guardrail
