@@ -130,22 +130,28 @@ graph TD
 During document sync (e.g. from GitHub, Confluence, Google Drive, or Local file upload), files are mapped to resource scopes (containers) defining their security properties before they are chunked and indexed. If a security definition does not exist in the database, the ingestion pipeline aborts to prevent security leaks:
 
 ```mermaid
-graph TD
-    SourceSync["Connector Sync / Local File Upload"] --> Crawl["Crawl Resource Path / Load File Parameters"]
-    Crawl --> Classify["Classify Security Context<br><i>(source_manifest.py)</i>"]
-    
-    Classify --> Mapped["Mapped Security Tuple<br><i>(department, rank, scope_external_id)</i>"]
-    
-    Mapped --> Lookup["Resolve Relational IDs in DB<br><i>(ingestion_common_service.py)</i>"]
-    
-    Lookup --> CheckScope{Are matching rows found in DB?}
-    
-    CheckScope -->|No| Abort["Raise ValueError (Abort Sync & block file ingestion)"]
-    CheckScope -->|Yes| SaveDoc["Save/Update Document mapped to resource_scope_id<br><i>(document_service.py)</i>"]
-    
-    SaveDoc --> SplitChunks["Split Text and Generate Vector Embeddings"]
-    SplitChunks --> SaveChunks["Save Chunks stamped with resource_scope_id<br><i>(document_chunks table)</i>"]
+flowchart TD
+    A["GitHub API"]
+    B["github_connector.py"]
+    C["source_manifest.py"]
+    D["ingestion_common_service.py"]
+    E["resource_scopes table"]
+    F["departments & auth_levels tables"]
+    G["Save Document"]
+    H["documents<br>resource_scope_id = 8"]
+    I["document_chunks<br>resource_scope_id = 8"]
+
+    A -->|"1. Crawl File: borcella_admin/app/(dashboard)/page.tsx"| B
+    B -->|"2. Classify Path"| C
+    C -->|"Returns: TECH, L2, BC-GITHUB-TECH-L2"| D
+    D -->|"4. Lookup resource_scope"| E
+    D -->|"4. Lookup department & auth_level"| F
+    E -->|"Resolved → DB ID = 8"| G
+    F -->|"Resolved → DB IDs"| G
+    G -->|"STAMPING"| H
+    H -->|"6. Split text & generate embeddings"| I
 ```
+
 
 ---
 
